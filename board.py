@@ -39,11 +39,5 @@ def getCellCenter(board, row, col):
     cellCx = cellLeft + ((board.boardWidth / board.cols) / 2)
     cellCy = cellTop + ((board.boardHeight / board.rows) / 2)
     return (cellCx, cellCy)
-
-# draws each piece
-def drawPieces(board, player):
-    for piece in player.pieces:
-        for square in player.pieces[piece]:
-            centerX, centerY = getCellCenter(board, square[0], square[1])
-            drawImage(piece, centerX, centerY, align = 'center')
+    
 
