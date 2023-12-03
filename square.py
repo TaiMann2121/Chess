@@ -42,4 +42,4 @@ def getSquare(squares, board, mouseX, mouseY):
     for rowCheck in range(len(squares)):
         for colCheck in range(len(squares[0])):
             if squares[rowCheck][colCheck].row == row and squares[rowCheck][colCheck].col == col:
-                return squares[rowCheck][colCheck] 
+                return squares[rowCheck][colCheck]

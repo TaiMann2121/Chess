@@ -6,40 +6,21 @@ class Piece:
 # individual pieces inherited from piece class
 
 # black pieces
-class BlackPawn(Piece):
+class Pawn(Piece):
     def __init__(self, image):
         super().__init__(image)
-class BlackRook(Piece):
+class Rook(Piece):
     def __init__(self, image):
         super().__init__(image)
-class BlackKnight(Piece):
+class Knight(Piece):
     def __init__(self, image):
         super().__init__(image)
-class BlackBishop(Piece):
+class Bishop(Piece):
     def __init__(self, image):
         super().__init__(image)
-class BlackQueen(Piece):
+class Queen(Piece):
     def __init__(self, image):
         super().__init__(image)
-class BlackKing(Piece):
-    def __init__(self, image):
-        super().__init__(image)
-# white pieces
-class WhitePawn(Piece):
-    def __init__(self, image):
-        super().__init__(image)
-class WhiteRook(Piece):
-    def __init__(self, image):
-        super().__init__(image)
-class WhiteKnight(Piece):
-    def __init__(self, image):
-        super().__init__(image)
-class WhiteBishop(Piece):
-    def __init__(self, image):
-        super().__init__(image)
-class WhiteQueen(Piece):
-    def __init__(self, image):
-        super().__init__(image)
-class WhiteKing(Piece):
+class King(Piece):
     def __init__(self, image):
         super().__init__(image)
