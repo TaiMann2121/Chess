@@ -42,6 +42,12 @@ def reset(app):
     app.selectedSquare = None
     # current square starts at None
     app.currentSquare = None
+    # message
+    app.message = 'HI'
+    # prevous move (Square at inital position, square at final position)
+    app.initialSquare = None
+    app.finalSquare = None
+    app.previousMove = (app.initialSquare, app.finalSquare)
 # redrawAll function
 def redrawAll(app):
     # background and title
@@ -88,6 +94,20 @@ def redrawAll(app):
                 drawLabel('Selected Square: Empty Space', 330, 330)
         drawLabel(f'player 1 canCastle: {app.player1.canCastle}', 330, 250)
         drawLabel(f'player 2 canCastle: {app.player2.canCastle}', 330, 240)
+        if app.previousMove[0] != None and app.previousMove[1] != None:
+            drawLabel('Previous moves', 330, 150)
+            drawLabel(f'inital Square position: {app.previousMove[0].row}, {app.previousMove[0].col}', 330, 160)
+            drawLabel('inital Square piece: ', 330, 175)
+            if app.previousMove[0].piece != None:
+                drawImage(app.previousMove[0].piece.image, 360, 175)
+            else:
+                drawLabel('None', 360, 175)
+            drawLabel(f'final Square position: {app.previousMove[1].row}, {app.previousMove[1].col}', 330, 190)
+            drawLabel('final Square piece', 330, 210)
+            if app.previousMove[1].piece != None:
+                drawImage(app.previousMove[1].piece.image, 360, 210)
+            else:
+                drawLabel('None', 360, 210)
         ###### test code ######
 # onMousePress
 def onMousePress(app, mouseX, mouseY):
@@ -355,9 +375,13 @@ def onMousePress(app, mouseX, mouseY):
                 # A square is already selected, meaning we want to move the piece or change selection
                 else:
                     # if this is a legal move
-                    if app.currentSquare in legalMoves(app.selectedSquare, app.squares, app.player1):
+                    if app.currentSquare in legalMoves(app.selectedSquare, app.squares, app.player1, app.previousMove):
                         # make the move
-                        makeMove(app.selectedSquare, app.currentSquare, app.squares, app.player1)
+                        makeMove(app.selectedSquare, app.currentSquare, app.squares, app.player1, app.previousMove)
+                        # keep track of Previous move
+                        app.initialSquare = app.selectedSquare
+                        app.finalSquare = app.currentSquare
+                        app.previousMove = (app.initialSquare, app.finalSquare)
                         # every time player makes a move, we want to update canCastle
                         if app.player1.canCastle != None:
                             app.player1.canCastle = updateCanCastle(app.player1, app.squares)
@@ -366,6 +390,9 @@ def onMousePress(app, mouseX, mouseY):
                         app.player2.isTurn = True
                         # make selected square None
                         app.selectedSquare = None
+                        # every time player 1 make's a move we want to see if they put
+                        # player 2 in check
+
                     # elif we want to change selection
                     elif isLegalSelection(app.player1, app.currentSquare):
                         app.selectedSquare = app.currentSquare
@@ -381,9 +408,13 @@ def onMousePress(app, mouseX, mouseY):
                 # A sqaure is selected, meaning we want to move the piece or change selection
                 else:
                     # if this is a legal move
-                    if app.currentSquare in legalMoves(app.selectedSquare, app.squares, app.player2):
+                    if app.currentSquare in legalMoves(app.selectedSquare, app.squares, app.player2, app.previousMove):
                         # make move
-                        makeMove(app.selectedSquare, app.currentSquare, app.squares, app.player2)
+                        makeMove(app.selectedSquare, app.currentSquare, app.squares, app.player2, app.previousMove)
+                        # keep track of Previous move
+                        app.initialSquare = app.selectedSquare
+                        app.finalSquare = app.currentSquare
+                        app.previousMove = (app.initialSquare, app.finalSquare)
                         # every time player makes a move, we want to update canCastle
                         if app.player2.canCastle != None:
                             app.player2.canCastle = updateCanCastle(app.player2, app.squares)

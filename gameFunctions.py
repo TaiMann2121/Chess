@@ -1,13 +1,20 @@
 from piece import *
+import copy
 # checks if a sqaure is a legal selection
 def isLegalSelection(player, square):
     # a selection is legal as long as the player selects a square with the same color as their color
     return player.color == square.color
 # makes a move 
-def makeMove(selectedSquare, moveSquare, squares, player):
+def makeMove(selectedSquare, moveSquare, squares, player, previousMove):
+    # en passent
+    initialSquareDrow = 1 if (player.name == 'player 2' or player.name == 'AI') else -1
+    if previousMove[0] == squares[selectedSquare.row+(2*initialSquareDrow)][moveSquare.col] and previousMove[1] == squares[selectedSquare.row][moveSquare.col] and isinstance(previousMove[1].piece, Pawn) and isinstance(selectedSquare.piece, Pawn):
+        moveSquare.piece, selectedSquare.piece = selectedSquare.piece, None
+        moveSquare.color, selectedSquare.color = selectedSquare.color, None
+        squares[selectedSquare.row][moveSquare.col].piece = None
+        squares[selectedSquare.row][moveSquare.col].color = None
     # handle castling
-    
-    if player.canCastle == True and isinstance(selectedSquare.piece, King) and moveSquare == squares[selectedSquare.row][selectedSquare.col+2]:
+    elif player.canCastle == True and isinstance(selectedSquare.piece, King) and moveSquare == squares[selectedSquare.row][selectedSquare.col+2]:
         # row and col of king 
         row = selectedSquare.row
         col = selectedSquare.col
@@ -22,7 +29,7 @@ def makeMove(selectedSquare, moveSquare, squares, player):
         squares[row][col+3].piece = None
         squares[row][col+3].color = None
         # player already castled so player.canCastle is now None
-        player.canCastle = None 
+        player.canCastle = None
     # normal move
     else:
         # we want the square we are moving the piece to to have the piece that 
@@ -34,9 +41,9 @@ def makeMove(selectedSquare, moveSquare, squares, player):
     
 # given a selected square and a 2d list of sqaures(board), return a list of
 # all the squares that the piece on the selected square can move to
-def legalMoves(selectedSquare, squares, player):
+def legalMoves(selectedSquare, squares, player, previousMove):
     if isinstance(selectedSquare.piece, Pawn):
-        return legalPawnMoves(selectedSquare, squares, player)
+        return legalPawnMoves(selectedSquare, squares, player, previousMove)
     elif isinstance(selectedSquare.piece, Rook):
         return legalRookMoves(selectedSquare, squares)
     elif isinstance(selectedSquare.piece, Knight):
@@ -48,7 +55,7 @@ def legalMoves(selectedSquare, squares, player):
     elif isinstance(selectedSquare.piece, King):
         return legalKingMoves(selectedSquare, squares, player.canCastle)
     
-def legalPawnMoves(selectedSquare, squares, player):
+def legalPawnMoves(selectedSquare, squares, player, previousMove):
     legalSquares = []
     row = selectedSquare.row
     col = selectedSquare.col
@@ -71,6 +78,10 @@ def legalPawnMoves(selectedSquare, squares, player):
             if colCheck >= 0 and colCheck < len(squares[0]):
                 if squares[rowCheck][colCheck].piece != None and squares[rowCheck][colCheck].color != selectedSquare.color:
                     legalSquares.append(squares[rowCheck][colCheck])
+                # en passent
+                if selectedSquare.row == 4:
+                    if previousMove[0] == squares[row+2][colCheck] and previousMove[1] == squares[row][colCheck] and isinstance(previousMove[1].piece, Pawn) and squares[rowCheck][colCheck].piece == None:
+                        legalSquares.append(squares[rowCheck][colCheck])
     # bottom of board
     else:
         # if pawn is at starting position, we need to check if it can move up 2 rows
@@ -90,6 +101,10 @@ def legalPawnMoves(selectedSquare, squares, player):
             if colCheck >= 0 and colCheck < len(squares[0]):
                 if squares[rowCheck][colCheck].piece != None and squares[rowCheck][colCheck].color != selectedSquare.color:
                     legalSquares.append(squares[rowCheck][colCheck])
+                # en passent
+                if selectedSquare.row == 3:
+                    if previousMove[0] == squares[row-2][colCheck] and previousMove[1] == squares[row][colCheck] and isinstance(previousMove[1].piece, Pawn) and squares[rowCheck][colCheck].piece == None:
+                        legalSquares.append(squares[rowCheck][colCheck])
 
     return legalSquares
 
