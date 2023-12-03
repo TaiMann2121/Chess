@@ -13,5 +13,5 @@
 #     return row, col
 # board = Board()
 # print(getSquare(board, 26, 150))
-L = [1,2,3,4]
-print('hi' == 'hi')
+x = (1,2)
+print(x[0])
