@@ -34,10 +34,10 @@ def reset(app):
     app.showAIMenuScreen = False
     # creates board
     app.board = Board()
-    app.sqaures = []
+    app.squares = []
     # initializes players
-    app.player1 = Player('white', True, False, 'player 1')
-    app.player2  = Player('black', False, False, 'player 2')
+    app.player1 = Player('white', True, False, 'player 1', False)
+    app.player2  = Player('black', False, False, 'player 2', False)
     # selected square starts at None
     app.selectedSquare = None
     # current square starts at None
@@ -53,7 +53,7 @@ def redrawAll(app):
         drawAIMenuScreen()
     else: # we are in Game
         # Icons
-        drawIcons(app.player1, app.player2)
+        drawIcons(app.player1, app.player2, app.message)
         # draws border
         drawBorder(app.board)
         # draws all the squares
@@ -86,6 +86,8 @@ def redrawAll(app):
                 drawImage(app.selectedSquare.piece.image, 360, 330, align = 'center')
             else:
                 drawLabel('Selected Square: Empty Space', 330, 330)
+        drawLabel(f'player 1 canCastle: {app.player1.canCastle}', 330, 250)
+        drawLabel(f'player 2 canCastle: {app.player2.canCastle}', 330, 240)
         ###### test code ######
 # onMousePress
 def onMousePress(app, mouseX, mouseY):
@@ -181,8 +183,8 @@ def onMousePress(app, mouseX, mouseY):
             # white
             if mouseY <= 225 and mouseY >= 125:
                 app.showAIMenuScreen = False
-                app.player1 = Player('white', True, False, 'player 1')
-                app.player2 = Player('black', False, True, 'AI')
+                app.player1 = Player('white', True, False, 'player 1', False)
+                app.player2 = Player('black', False, True, 'AI', False)
                 # black pieces (16 total)
                 squareH1 = Square(Rook(app.blackRookImg), 0, 0, 'black')
                 squareG1 = Square(Knight(app.blackKnightImg), 0, 1, 'black')
@@ -261,8 +263,8 @@ def onMousePress(app, mouseX, mouseY):
             # black
             elif mouseY <= 350 and mouseY >= 250:
                 app.showAIMenuScreen = False
-                app.player1 = Player('black', False, False, 'player 1')
-                app.player2 = Player('white', True, True, 'AI')
+                app.player1 = Player('black', False, False, 'player 1', False)
+                app.player2 = Player('white', True, True, 'AI', False)
                 # white pieces (16 total)
                 squareH1 = Square(Rook(app.whiteRookImg), 0, 0, 'white')
                 squareG1 = Square(Knight(app.whiteKnightImg), 0, 1, 'white')
@@ -355,7 +357,10 @@ def onMousePress(app, mouseX, mouseY):
                     # if this is a legal move
                     if app.currentSquare in legalMoves(app.selectedSquare, app.squares, app.player1):
                         # make the move
-                        makeMove(app.selectedSquare, app.currentSquare)
+                        makeMove(app.selectedSquare, app.currentSquare, app.squares, app.player1)
+                        # every time player makes a move, we want to update canCastle
+                        if app.player1.canCastle != None:
+                            app.player1.canCastle = updateCanCastle(app.player1, app.squares)
                         # it now becomes player 2's turn
                         app.player1.isTurn = False
                         app.player2.isTurn = True
@@ -378,7 +383,10 @@ def onMousePress(app, mouseX, mouseY):
                     # if this is a legal move
                     if app.currentSquare in legalMoves(app.selectedSquare, app.squares, app.player2):
                         # make move
-                        makeMove(app.selectedSquare, app.currentSquare)
+                        makeMove(app.selectedSquare, app.currentSquare, app.squares, app.player2)
+                        # every time player makes a move, we want to update canCastle
+                        if app.player2.canCastle != None:
+                            app.player2.canCastle = updateCanCastle(app.player2, app.squares)
                         # it now becomes player 1's turn
                         app.player1.isTurn = True
                         app.player2.isTurn = False

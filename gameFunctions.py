@@ -4,14 +4,34 @@ def isLegalSelection(player, square):
     # a selection is legal as long as the player selects a square with the same color as their color
     return player.color == square.color
 # makes a move 
-def makeMove(selectedSquare, moveSquare):
-    # we want the square we are moving the piece to to have the piece that 
-    # the selected square originally contained, then we want to set the
-    # selected sqaure's piece to None, since we moved the piece
-    moveSquare.piece, selectedSquare.piece = selectedSquare.piece, None
-    # same idea with the square's color's
-    moveSquare.color, selectedSquare.color = selectedSquare.color, None
-    ### edge cases ###   #castling#
+def makeMove(selectedSquare, moveSquare, squares, player):
+    # handle castling
+    
+    if player.canCastle == True and isinstance(selectedSquare.piece, King) and moveSquare == squares[selectedSquare.row][selectedSquare.col+2]:
+        # row and col of king 
+        row = selectedSquare.row
+        col = selectedSquare.col
+        # moves king
+        squares[row][col+2].piece = selectedSquare.piece
+        squares[row][col+2].color = selectedSquare.color
+        selectedSquare.piece = None
+        selectedSquare.color = None
+        # moves rook
+        squares[row][col+1].piece = squares[row][col+3].piece
+        squares[row][col+1].color = squares[row][col+3].color
+        squares[row][col+3].piece = None
+        squares[row][col+3].color = None
+        # player already castled so player.canCastle is now None
+        player.canCastle = None 
+    # normal move
+    else:
+        # we want the square we are moving the piece to to have the piece that 
+        # the selected square originally contained, then we want to set the
+        # selected sqaure's piece to None, since we moved the piece
+        moveSquare.piece, selectedSquare.piece = selectedSquare.piece, None
+        # same idea with the square's color's
+        moveSquare.color, selectedSquare.color = selectedSquare.color, None
+    
 # given a selected square and a 2d list of sqaures(board), return a list of
 # all the squares that the piece on the selected square can move to
 def legalMoves(selectedSquare, squares, player):
@@ -26,7 +46,7 @@ def legalMoves(selectedSquare, squares, player):
     elif isinstance(selectedSquare.piece, Queen):
         return legalQueenMoves(selectedSquare, squares)
     elif isinstance(selectedSquare.piece, King):
-        return legalKingMoves(selectedSquare, squares)
+        return legalKingMoves(selectedSquare, squares, player.canCastle)
     
 def legalPawnMoves(selectedSquare, squares, player):
     legalSquares = []
@@ -48,8 +68,9 @@ def legalPawnMoves(selectedSquare, squares, player):
         directions = [-1, 1]
         for dcol in directions:
             colCheck = col + dcol
-            if squares[rowCheck][colCheck].piece != None and squares[rowCheck][colCheck].color != selectedSquare.color:
-                legalSquares.append(squares[rowCheck][colCheck])
+            if colCheck >= 0 and colCheck < len(squares[0]):
+                if squares[rowCheck][colCheck].piece != None and squares[rowCheck][colCheck].color != selectedSquare.color:
+                    legalSquares.append(squares[rowCheck][colCheck])
     # bottom of board
     else:
         # if pawn is at starting position, we need to check if it can move up 2 rows
@@ -66,8 +87,9 @@ def legalPawnMoves(selectedSquare, squares, player):
         directions = [-1, 1]
         for dcol in directions:
             colCheck = col + dcol
-            if squares[rowCheck][colCheck].piece != None and squares[rowCheck][colCheck].color != selectedSquare.color:
-                legalSquares.append(squares[rowCheck][colCheck])
+            if colCheck >= 0 and colCheck < len(squares[0]):
+                if squares[rowCheck][colCheck].piece != None and squares[rowCheck][colCheck].color != selectedSquare.color:
+                    legalSquares.append(squares[rowCheck][colCheck])
 
     return legalSquares
 
@@ -202,7 +224,7 @@ def legalQueenMoves(selectedSquare, squares):
     legalSquares = legalRookMoves(selectedSquare, squares) + legalBishopMoves(selectedSquare, squares)
     return legalSquares
 
-def legalKingMoves(selectedSquare, squares):
+def legalKingMoves(selectedSquare, squares, canCastle):
     legalSquares = []
     row = selectedSquare.row
     col = selectedSquare.col
@@ -213,5 +235,35 @@ def legalKingMoves(selectedSquare, squares):
         if rowCheck >=0 and rowCheck < len(squares) and colCheck >= 0 and colCheck < len(squares[0]):
             if squares[rowCheck][colCheck].piece == None or squares[rowCheck][colCheck].color != selectedSquare.color:
                 legalSquares.append(squares[rowCheck][colCheck])
+    # castling
+    if canCastle:
+        legalSquares.append(squares[row][col+2])
     return legalSquares
+
+# canCastle = False when player player can't castle now but still can
+# canCastle = True when the player can castle
+# canCastle = None when either the player has either already castled or made a move that made it illegal for them to castle
+def updateCanCastle(player, squares):
+    # top of the board
+    if player.name == 'player 2' or player.name == 'AI':
+        # if the player moved their king or their right rook, player can no longer castle
+        if squares[0][4].piece == None or squares[0][7].piece == None:
+            return None
+        # if these one of these squares was already empty and the other was just moved
+        # the player can now Castle
+        elif squares[0][5].piece == None and squares[0][6].piece == None:
+            return True
+        else:
+            return False
+    # bottom of the board
+    else:
+        # if the player moved their king or their right rook, player can no longer castle
+        if squares[7][4].piece == None or squares[7][7].piece == None:
+            return None
+        # if one of these squares was already empty and the other was just moved
+        # the player can now Castle
+        elif squares[7][5].piece == None and squares[7][6].piece == None:
+            return True
+        else:
+            return False
     
