@@ -7,6 +7,14 @@ class Square:
         self.row = row
         self.col = col
         self.color = color
+    def __repr__(self):
+        if self.piece != None:
+            strPiece = type(self.piece)
+            pieceColor = self.color
+        else:
+            strPiece = 'Empty Square'
+            pieceColor = ''
+        return f"{pieceColor} {strPiece} at {self.row}, {self.col}"
 # draw square
 def drawSquare(board, square):
     squareLeft, squareTop = getSquareLeftTop(board, square.row, square.col)
