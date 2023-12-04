@@ -48,6 +48,10 @@ def reset(app):
     app.initialSquare = None
     app.finalSquare = None
     app.previousMove = (app.initialSquare, app.finalSquare)
+    # show pawn promotion screen
+    app.showPawnPromotion = False
+    # gameOver starts as False
+    app.gameOver = False
 # redrawAll function
 def redrawAll(app):
     # background and title
@@ -108,6 +112,9 @@ def redrawAll(app):
                 drawImage(app.previousMove[1].piece.image, 360, 210)
             else:
                 drawLabel('None', 360, 210)
+        drawLabel(f"player 1's king is at{findKing(app.player1, app.squares).row}, {findKing(app.player1, app.squares).col}", 330, 140)
+        drawLabel(f"player 2's king is at{findKing(app.player2, app.squares).row}, {findKing(app.player2, app.squares).col}", 330, 130)
+        
         ###### test code ######
 # onMousePress
 def onMousePress(app, mouseX, mouseY):
@@ -362,8 +369,8 @@ def onMousePress(app, mouseX, mouseY):
                                [squareH8, squareG8, squareF8, squareE8, squareD8, squareC8, squareB8, squareA8]]
     else: # we are in game
         app.currentSquare = getSquare(app.squares, app.board, mouseX, mouseY)
-        # if user clicks on a square
-        if app.currentSquare != None:
+        # if user clicks on a square or the game isn't over
+        if app.currentSquare != None and app.gameOver == False:
             # it's player 1's turn
             if app.player1.isTurn == True:
                 # square is not selected, meaning that this mouse press should make a selection
@@ -374,10 +381,17 @@ def onMousePress(app, mouseX, mouseY):
                         ### still player 1's turn ###
                 # A square is already selected, meaning we want to move the piece or change selection
                 else:
-                    # if this is a legal move
-                    if app.currentSquare in legalMoves(app.selectedSquare, app.squares, app.player1, app.previousMove):
+                    # find the semi legal and fully legal squares of the piece on the selected square 
+                    semiLegalSquares = semiLegalMoves(app.selectedSquare, app.squares, app.player1, app.previousMove)
+                    fullyLegalSquares = fullyLegalMoves(app.selectedSquare, app.squares, app.player1, app.previousMove, app.player2, semiLegalSquares)
+                    print(f'semi legal Squares: {semiLegalSquares}')
+                    print(f'fully legal Squares: {fullyLegalSquares}')
+                    if app.currentSquare in fullyLegalSquares:
                         # make the move
                         makeMove(app.selectedSquare, app.currentSquare, app.squares, app.player1, app.previousMove)
+                        # say player 1 was in check but made a move to get it out of check
+                        # want to reset message
+                        app.message = "player 2's turn"
                         # keep track of Previous move
                         app.initialSquare = app.selectedSquare
                         app.finalSquare = app.currentSquare
@@ -385,14 +399,22 @@ def onMousePress(app, mouseX, mouseY):
                         # every time player makes a move, we want to update canCastle
                         if app.player1.canCastle != None:
                             app.player1.canCastle = updateCanCastle(app.player1, app.squares)
+                        # every time player 1 make's a move we want to see if they put
+                        # player 2 in check or checkmate
+                        if inCheck(app.player2, app.squares, app.player1, app.previousMove):
+                            app.message = 'Check'
+                        if inCheckmate(app.player2, app.squares, app.player1, app.previousMove):
+                            app.message = f'Checkmate: {app.player1.name} wins'
+                            app.gameOver = True
                         # it now becomes player 2's turn
                         app.player1.isTurn = False
                         app.player2.isTurn = True
                         # make selected square None
                         app.selectedSquare = None
-                        # every time player 1 make's a move we want to see if they put
-                        # player 2 in check
-
+                    # elif the current square is semiLegalSquares but is not in fullyLegalSquares, making
+                    # it an illegal move
+                    elif app.currentSquare in semiLegalSquares:
+                        app.message = 'Illegal move'
                     # elif we want to change selection
                     elif isLegalSelection(app.player1, app.currentSquare):
                         app.selectedSquare = app.currentSquare
@@ -407,10 +429,16 @@ def onMousePress(app, mouseX, mouseY):
                         ### still player 2's turn
                 # A sqaure is selected, meaning we want to move the piece or change selection
                 else:
-                    # if this is a legal move
-                    if app.currentSquare in legalMoves(app.selectedSquare, app.squares, app.player2, app.previousMove):
+                    # find the semi legal and fully legal squares of the piece on the selected square 
+                    semiLegalSquares = semiLegalMoves(app.selectedSquare, app.squares, app.player2, app.previousMove)
+                    fullyLegalSquares = fullyLegalMoves(app.selectedSquare, app.squares, app.player2, app.previousMove, app.player1, semiLegalSquares)
+                    # if the current square is a fully legal square, make the move
+                    if app.currentSquare in fullyLegalSquares:
                         # make move
                         makeMove(app.selectedSquare, app.currentSquare, app.squares, app.player2, app.previousMove)
+                        # say player 2 was in check but made a move to get it out of check
+                        # want to reset the message
+                        app.message = "player 1's turn"
                         # keep track of Previous move
                         app.initialSquare = app.selectedSquare
                         app.finalSquare = app.currentSquare
@@ -418,11 +446,21 @@ def onMousePress(app, mouseX, mouseY):
                         # every time player makes a move, we want to update canCastle
                         if app.player2.canCastle != None:
                             app.player2.canCastle = updateCanCastle(app.player2, app.squares)
+                        # every time player 2 makes a move we want to see if they put
+                        # player 1 in check or in checkMate
+                        if inCheck(app.player1, app.squares, app.player2, app.previousMove):
+                            app.message = 'Check'
+                        if inCheckmate(app.player1, app.squares, app.player2, app.previousMove):
+                            app.message = f'Checkmate: {app.player2.name} wins'
+                            app.gameOver = True
                         # it now becomes player 1's turn
                         app.player1.isTurn = True
                         app.player2.isTurn = False
                         # make selected square None
                         app.selectedSquare = None
+                    # elif the square is in semiLegalSquares but not in fullyLegalSquares, making it an illegal move
+                    elif app.currentSquare in semiLegalSquares:
+                        app.message = 'Illegal move'
                     # elif we want to change the selection
                     elif isLegalSelection(app.player2, app.currentSquare):
                         app.selectedSquare = app.currentSquare

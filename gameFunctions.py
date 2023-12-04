@@ -1,5 +1,8 @@
 from piece import *
 import copy
+from square import *
+from functools import cache
+@cache
 # checks if a sqaure is a legal selection
 def isLegalSelection(player, square):
     # a selection is legal as long as the player selects a square with the same color as their color
@@ -8,7 +11,7 @@ def isLegalSelection(player, square):
 def makeMove(selectedSquare, moveSquare, squares, player, previousMove):
     # en passent
     initialSquareDrow = 1 if (player.name == 'player 2' or player.name == 'AI') else -1
-    if previousMove[0] == squares[selectedSquare.row+(2*initialSquareDrow)][moveSquare.col] and previousMove[1] == squares[selectedSquare.row][moveSquare.col] and isinstance(previousMove[1].piece, Pawn) and isinstance(selectedSquare.piece, Pawn):
+    if isinstance(selectedSquare.piece, Pawn) and previousMove[0] == squares[selectedSquare.row+(2*initialSquareDrow)][moveSquare.col] and previousMove[1] == squares[selectedSquare.row][moveSquare.col] and isinstance(previousMove[1].piece, Pawn):
         moveSquare.piece, selectedSquare.piece = selectedSquare.piece, None
         moveSquare.color, selectedSquare.color = selectedSquare.color, None
         squares[selectedSquare.row][moveSquare.col].piece = None
@@ -39,23 +42,57 @@ def makeMove(selectedSquare, moveSquare, squares, player, previousMove):
         # same idea with the square's color's
         moveSquare.color, selectedSquare.color = selectedSquare.color, None
     
-# given a selected square and a 2d list of sqaures(board), return a list of
-# all the squares that the piece on the selected square can move to
-def legalMoves(selectedSquare, squares, player, previousMove):
+# returns a list of all the semi legal squares a piece on the selected square can move to
+# a semi legal square is a square that the piece on the selected square can move to
+# but might put the player in check
+def semiLegalMoves(selectedSquare, squares, player, previousMove):
+    semiLegalSquares = []
     if isinstance(selectedSquare.piece, Pawn):
-        return legalPawnMoves(selectedSquare, squares, player, previousMove)
+        semiLegalSquares = semiLegalPawnMoves(selectedSquare, squares, player, previousMove)
     elif isinstance(selectedSquare.piece, Rook):
-        return legalRookMoves(selectedSquare, squares)
+        semiLegalSquares = semiLegalRookMoves(selectedSquare, squares)
     elif isinstance(selectedSquare.piece, Knight):
-        return legalKnightMoves(selectedSquare, squares)
+        semiLegalSquares = semiLegalKnightMoves(selectedSquare, squares)
     elif isinstance(selectedSquare.piece, Bishop):
-        return legalBishopMoves(selectedSquare, squares)
+        semiLegalSquares = semiLegalBishopMoves(selectedSquare, squares)
     elif isinstance(selectedSquare.piece, Queen):
-        return legalQueenMoves(selectedSquare, squares)
+        semiLegalSquares = semiLegalQueenMoves(selectedSquare, squares)
     elif isinstance(selectedSquare.piece, King):
-        return legalKingMoves(selectedSquare, squares, player.canCastle)
-    
-def legalPawnMoves(selectedSquare, squares, player, previousMove):
+        semiLegalSquares = semiLegalKingMoves(selectedSquare, squares, player.canCastle)
+    return semiLegalSquares
+
+# returns a list of all the fully legal squares, a fully legal square is semi legal square that also will
+# not put the given player in check is the piece on the selected square is moved to this square
+def fullyLegalMoves(selectedSquare, squares, player, previousMove, otherPlayer, semiLegalSquares):
+        fullyLegalSquares = []
+        squaresCopy = []
+        squareRows = []
+        # go through every square in semiLegalSquares
+        for square in semiLegalSquares:
+            # WE DO NOT want to modify anything on our board, therefore we need to create a new selectedSquare object
+            # a new semiLegalSquare object for each square in semiLegalSquares, and a new board, creating new
+            # square objects for each row and col of the squares list, and inserting selectedSquareCopy and 
+            # semiLegalSquare copy at it's respective row and column
+            # We want to re initalize these copies for every iteration through semiLegalSquares, which is why we 
+            # do this inside the for loop
+            ###selectedSquareCopy = Square(selectedSquare.piece, selectedSquare.row, selectedSquare.col, selectedSquare.color)
+            ###semiLegalSquareCopy = Square(square.piece, square.row, square.col, square.color)
+            for row in range(len(squares)):
+                for col in range(len(squares[0])):
+                    squareRows.append(Square(squares[row][col].piece, squares[row][col].row, squares[row][col].col, squares[row][col].color))
+                squaresCopy.append(squareRows)
+                squareRows = []
+            # make the move on this copied board
+            makeMove(squaresCopy[selectedSquare.row][selectedSquare.col], squaresCopy[square.row][square.col], squaresCopy, player, previousMove)
+            # if we make this move and the player is not in check, then this square is a fullyLegalSquare and 
+            # therefore we append it to the fullyLegalSquares list
+            if not inCheck(player, squaresCopy, otherPlayer, previousMove):
+                fullyLegalSquares.append(square)
+            # reset board
+            squaresCopy = []
+        return fullyLegalSquares
+
+def semiLegalPawnMoves(selectedSquare, squares, player, previousMove):
     legalSquares = []
     row = selectedSquare.row
     col = selectedSquare.col
@@ -108,7 +145,7 @@ def legalPawnMoves(selectedSquare, squares, player, previousMove):
 
     return legalSquares
 
-def legalRookMoves(selectedSquare, squares):
+def semiLegalRookMoves(selectedSquare, squares):
     legalSquares = []
     row = selectedSquare.row
     col = selectedSquare.col
@@ -164,7 +201,7 @@ def legalRookMoves(selectedSquare, squares):
             break
     return legalSquares
 
-def legalKnightMoves(selectedSquare, squares):
+def semiLegalKnightMoves(selectedSquare, squares):
     legalSquares = []
     row = selectedSquare.row
     col = selectedSquare.col
@@ -177,7 +214,7 @@ def legalKnightMoves(selectedSquare, squares):
                 legalSquares.append(squares[rowCheck][colCheck])
     return legalSquares
 
-def legalBishopMoves(selectedSquare, squares):
+def semiLegalBishopMoves(selectedSquare, squares):
     legalSquares = []
     row = selectedSquare.row
     col = selectedSquare.col
@@ -235,11 +272,11 @@ def legalBishopMoves(selectedSquare, squares):
             break
     return legalSquares
 
-def legalQueenMoves(selectedSquare, squares):
-    legalSquares = legalRookMoves(selectedSquare, squares) + legalBishopMoves(selectedSquare, squares)
+def semiLegalQueenMoves(selectedSquare, squares):
+    legalSquares = semiLegalRookMoves(selectedSquare, squares) + semiLegalBishopMoves(selectedSquare, squares)
     return legalSquares
 
-def legalKingMoves(selectedSquare, squares, canCastle):
+def semiLegalKingMoves(selectedSquare, squares, canCastle):
     legalSquares = []
     row = selectedSquare.row
     col = selectedSquare.col
@@ -282,3 +319,33 @@ def updateCanCastle(player, squares):
         else:
             return False
     
+def inCheck(playerInQuestion, squares, playerAttacking, previousMove):
+    kingSquare = findKing(playerInQuestion, squares)
+    for row in range(len(squares)):
+        for col in range(len(squares[0])):
+            if squares[row][col].color == playerAttacking.color:
+                if kingSquare in semiLegalMoves(squares[row][col], squares, playerAttacking, previousMove):
+                    return True
+    return False
+
+def inCheckmate(playerInQuestion, squares, playerAttacking, previousMove):
+    allFullyLegalSquares = []
+    for row in range(len(squares)):
+        for col in range(len(squares[0])):
+            if squares[row][col].color == playerInQuestion.color:
+                semiLegalSquares = semiLegalMoves(squares[row][col], squares, playerInQuestion, previousMove)
+                fullyLegalSquares = fullyLegalMoves(squares[row][col], squares, playerInQuestion, previousMove, playerAttacking, semiLegalSquares)
+                allFullyLegalSquares.extend(fullyLegalSquares)
+    if playerInQuestion.color == 'white':
+        print(f'allFullyLegalSquares: {allFullyLegalSquares}')
+        print(f'Is in check: {inCheck(playerInQuestion, squares, playerAttacking, previousMove)}')
+    if len(allFullyLegalSquares) == 0 and inCheck(playerInQuestion, squares, playerAttacking, previousMove):
+        return True 
+    else:
+        return False
+
+def findKing(player, squares):
+    for row in range(len(squares)):
+        for col in range(len(squares[0])):
+            if isinstance(squares[row][col].piece, King) and squares[row][col].color == player.color:
+                return squares[row][col]
