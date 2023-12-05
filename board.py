@@ -3,8 +3,8 @@ from cmu_graphics import *
 class Board:
     def __init__(self):
         self.rows, self.cols = 8, 8
-        self.boardLeft, self.boardTop = 25, 100
-        self.boardWidth, self.boardHeight = 250, 250
+        self.boardLeft, self.boardTop = 50, 50
+        self.boardWidth, self.boardHeight = 300, 300
 class PromotionBoard:
     def __init__(self, rows, cols, boardLeft,  boardTop, boardWidth, boardHeight):
         self.rows = rows

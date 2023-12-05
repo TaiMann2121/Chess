@@ -43,7 +43,7 @@ def reset(app):
     # current square starts at None
     app.currentSquare = None
     # message
-    app.message = 'HI'
+    app.message = ''
     # prevous move (Square at inital position, square at final position)
     app.initialSquare = None
     app.finalSquare = None
@@ -54,11 +54,13 @@ def reset(app):
     app.pawnPromotionSquares = []
     # gameOver starts as False
     app.gameOver = False
+    # legalSquares
+    app.semiLegalSquares = []
+    app.fullyLegalSquares = []
 # redrawAll function
 def redrawAll(app):
     # background and title
     drawRect(0, 0, app.width, app.height, fill = 'burlyWood')
-    drawLabel('112 Chess!', 200, 50, size = 50, font = 'ariel', fill = 'black')
     if app.showMenu: # we are in menu
         drawMenu()
     elif app.showAIMenuScreen: # we are in AI menu
@@ -71,53 +73,53 @@ def redrawAll(app):
         # draws all the squares
         for row in range(len(app.squares)):
             for col in range(len(app.squares[0])):
-                drawSquare(app.board, app.squares[row][col])
+                drawSquare(app.board, app.squares[row][col], app.selectedSquare, app.fullyLegalSquares)
         if app.showPawnPromotion:
             drawPawnPromotion(app.pawnPromotionBoard, app.pawnPromotionSquares)
         ###### test code ######
-        if app.player1.isTurn == True:
-            drawLabel('Player 1 turn: True', 330, 270)
-        else:
-            drawLabel('Player 1 turn: False', 330, 270)
-        if app.player2.isTurn == True:
-            drawLabel('Player 2 turn: True', 330, 280)
-        else:
-            drawLabel('Player 2 turn: False', 330, 280)
-        if app.currentSquare == None:
-            drawLabel('Current Square: None', 330, 300)
-        else:
-            if app.currentSquare.piece != None:
-                drawLabel('Current Square', 330, 300)
-                drawImage(app.currentSquare.piece.image, 360, 300, align = 'center')
-            else:
-                drawLabel('Current Square: Empty Space', 330, 300)
+        # if app.player1.isTurn == True:
+        #     drawLabel('Player 1 turn: True', 330, 270)
+        # else:
+        #     drawLabel('Player 1 turn: False', 330, 270)
+        # if app.player2.isTurn == True:
+        #     drawLabel('Player 2 turn: True', 330, 280)
+        # else:
+        #     drawLabel('Player 2 turn: False', 330, 280)
+        # if app.currentSquare == None:
+        #     drawLabel('Current Square: None', 330, 300)
+        # else:
+        #     if app.currentSquare.piece != None:
+        #         drawLabel('Current Square', 330, 300)
+        #         drawImage(app.currentSquare.piece.image, 360, 300, align = 'center')
+        #     else:
+        #         drawLabel('Current Square: Empty Space', 330, 300)
 
-        if app.selectedSquare == None:
-                drawLabel('Selected Square: None', 330, 330)
-        else:
-            if app.selectedSquare.piece != None:
-                drawLabel('Selected Square', 330, 330)
-                drawImage(app.selectedSquare.piece.image, 360, 330, align = 'center')
-            else:
-                drawLabel('Selected Square: Empty Space', 330, 330)
-        drawLabel(f'player 1 canCastle: {app.player1.canCastle}', 330, 250)
-        drawLabel(f'player 2 canCastle: {app.player2.canCastle}', 330, 240)
-        if app.previousMove[0] != None and app.previousMove[1] != None:
-            drawLabel('Previous moves', 330, 150)
-            drawLabel(f'inital Square position: {app.previousMove[0].row}, {app.previousMove[0].col}', 330, 160)
-            drawLabel('inital Square piece: ', 330, 175)
-            if app.previousMove[0].piece != None:
-                drawImage(app.previousMove[0].piece.image, 360, 175)
-            else:
-                drawLabel('None', 360, 175)
-            drawLabel(f'final Square position: {app.previousMove[1].row}, {app.previousMove[1].col}', 330, 190)
-            drawLabel('final Square piece', 330, 210)
-            if app.previousMove[1].piece != None:
-                drawImage(app.previousMove[1].piece.image, 360, 210)
-            else:
-                drawLabel('None', 360, 210)
-        drawLabel(f"player 1's king is at{findKing(app.player1, app.squares).row}, {findKing(app.player1, app.squares).col}", 330, 140)
-        drawLabel(f"player 2's king is at{findKing(app.player2, app.squares).row}, {findKing(app.player2, app.squares).col}", 330, 130)
+        # if app.selectedSquare == None:
+        #         drawLabel('Selected Square: None', 330, 330)
+        # else:
+        #     if app.selectedSquare.piece != None:
+        #         drawLabel('Selected Square', 330, 330)
+        #         drawImage(app.selectedSquare.piece.image, 360, 330, align = 'center')
+        #     else:
+        #         drawLabel('Selected Square: Empty Space', 330, 330)
+        # drawLabel(f'player 1 canCastle: {app.player1.canCastle}', 330, 250)
+        # drawLabel(f'player 2 canCastle: {app.player2.canCastle}', 330, 240)
+        # if app.previousMove[0] != None and app.previousMove[1] != None:
+        #     drawLabel('Previous moves', 330, 150)
+        #     drawLabel(f'inital Square position: {app.previousMove[0].row}, {app.previousMove[0].col}', 330, 160)
+        #     drawLabel('inital Square piece: ', 330, 175)
+        #     if app.previousMove[0].piece != None:
+        #         drawImage(app.previousMove[0].piece.image, 360, 175)
+        #     else:
+        #         drawLabel('None', 360, 175)
+        #     drawLabel(f'final Square position: {app.previousMove[1].row}, {app.previousMove[1].col}', 330, 190)
+        #     drawLabel('final Square piece', 330, 210)
+        #     if app.previousMove[1].piece != None:
+        #         drawImage(app.previousMove[1].piece.image, 360, 210)
+        #     else:
+        #         drawLabel('None', 360, 210)
+        # drawLabel(f"player 1's king is at{findKing(app.player1, app.squares).row}, {findKing(app.player1, app.squares).col}", 330, 140)
+        # drawLabel(f"player 2's king is at{findKing(app.player2, app.squares).row}, {findKing(app.player2, app.squares).col}", 330, 130)
         
         ###### test code ######
 # onMousePress
@@ -400,20 +402,19 @@ def onMousePress(app, mouseX, mouseY):
                     # checks if currentSquare is a legal selection
                     if isLegalSelection(app.player1, app.currentSquare):
                         app.selectedSquare = app.currentSquare
+                        app.semiLegalSquares = semiLegalMoves(app.selectedSquare, app.squares, app.player1, app.previousMove)
+                        app.fullyLegalSquares = fullyLegalMoves(app.selectedSquare, app.squares, app.player1, app.previousMove, app.player2, app.semiLegalSquares)
                         ### still player 1's turn ###
                 # A square is already selected, meaning we want to move the piece or change selection
                 else:
                     # find the semi legal and fully legal squares of the piece on the selected square 
-                    semiLegalSquares = semiLegalMoves(app.selectedSquare, app.squares, app.player1, app.previousMove)
-                    fullyLegalSquares = fullyLegalMoves(app.selectedSquare, app.squares, app.player1, app.previousMove, app.player2, semiLegalSquares)
+                    
                     #print(f'semi legal Squares: {semiLegalSquares}')
                     #print(f'fully legal Squares: {fullyLegalSquares}')
-                    if app.currentSquare in fullyLegalSquares:
+                    if app.currentSquare in app.fullyLegalSquares:
                         # make the move
                         makeMove(app.selectedSquare, app.currentSquare, app.squares, app.player1, app.previousMove)
-                        # say player 1 was in check but made a move to get it out of check
-                        # want to reset message
-                        app.message = f"{app.player2.name}'s turn"
+                        app.message = ''
                         # checks for pawn promotion
                         if isinstance(app.currentSquare.piece, Pawn) and app.currentSquare.row == 0:
                             left, top = getSquareLeftTop(app.board, app.currentSquare.row, app.currentSquare.col)
@@ -451,13 +452,17 @@ def onMousePress(app, mouseX, mouseY):
                         app.player2.isTurn = True
                         # make selected square None
                         app.selectedSquare = None
+                        app.fullyLegalSquares = []
                     # elif the current square is semiLegalSquares but is not in fullyLegalSquares, making
                     # it an illegal move
-                    elif app.currentSquare in semiLegalSquares:
+                    elif app.currentSquare in app.semiLegalSquares:
                         app.message = 'Illegal move'
+                        app.semiLegalSquares = []
                     # elif we want to change selection
                     elif isLegalSelection(app.player1, app.currentSquare):
                         app.selectedSquare = app.currentSquare
+                        app.semiLegalSquares = semiLegalMoves(app.selectedSquare, app.squares, app.player1, app.previousMove)
+                        app.fullyLegalSquares = fullyLegalMoves(app.selectedSquare, app.squares, app.player1, app.previousMove, app.player2, app.semiLegalSquares)
                         ### still player 1's turn ###
             # it's player 2's turn
             else:
@@ -466,19 +471,18 @@ def onMousePress(app, mouseX, mouseY):
                     # checks if currentSquare is a legal selection
                     if isLegalSelection(app.player2, app.currentSquare):
                         app.selectedSquare = app.currentSquare
+                        app.semiLegalSquares = semiLegalMoves(app.selectedSquare, app.squares, app.player2, app.previousMove)
+                        app.fullyLegalSquares = fullyLegalMoves(app.selectedSquare, app.squares, app.player2, app.previousMove, app.player1, app.semiLegalSquares)
                         ### still player 2's turn
                 # A sqaure is selected, meaning we want to move the piece or change selection
                 else:
                     # find the semi legal and fully legal squares of the piece on the selected square 
-                    semiLegalSquares = semiLegalMoves(app.selectedSquare, app.squares, app.player2, app.previousMove)
-                    fullyLegalSquares = fullyLegalMoves(app.selectedSquare, app.squares, app.player2, app.previousMove, app.player1, semiLegalSquares)
+                    
                     # if the current square is a fully legal square, make the move
-                    if app.currentSquare in fullyLegalSquares:
+                    if app.currentSquare in app.fullyLegalSquares:
                         # make move
                         makeMove(app.selectedSquare, app.currentSquare, app.squares, app.player2, app.previousMove)
-                        # say player 2 was in check but made a move to get it out of check
-                        # want to reset the message
-                        app.message = f"{app.player1.name}'s turn"
+                        app.message = ''
                         # checks for pawn promotion
                         if isinstance(app.currentSquare.piece, Pawn) and app.currentSquare.row == 7:
                             left, top = getSquareLeftTop(app.board, app.currentSquare.row, app.currentSquare.col)
@@ -516,12 +520,16 @@ def onMousePress(app, mouseX, mouseY):
                         app.player2.isTurn = False
                         # make selected square None
                         app.selectedSquare = None
+                        app.fullyLegalSquares = []
                     # elif the square is in semiLegalSquares but not in fullyLegalSquares, making it an illegal move
-                    elif app.currentSquare in semiLegalSquares:
+                    elif app.currentSquare in app.semiLegalSquares:
                         app.message = 'Illegal move'
+                        app.semiLegalSquares = []
                     # elif we want to change the selection
                     elif isLegalSelection(app.player2, app.currentSquare):
                         app.selectedSquare = app.currentSquare
+                        app.semiLegalSquares = semiLegalMoves(app.selectedSquare, app.squares, app.player2, app.previousMove)
+                        app.fullyLegalSquares = fullyLegalMoves(app.selectedSquare, app.squares, app.player2, app.previousMove, app.player1, app.semiLegalSquares)
                         ### still player 2's turn ###
 
 # onKeyPress function
