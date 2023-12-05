@@ -1,5 +1,5 @@
 from cmu_graphics import *
-
+from square import *
 def drawIcons(player1 , player2, message):
     # draws menu button
     drawLabel("Press 'm' to go back to menu", 2, 6, align = 'left', size = 12, fill = 'black')
@@ -11,6 +11,10 @@ def drawIcons(player1 , player2, message):
     drawRect(100, 370, 200, 30, fill = 'white')
     drawLabel(message, 200, 385, align = 'center', fill = 'red', size = 30)
 
-def pawnPromotion():
-    pass
+def drawPawnPromotion(board, squares):
+    for square in squares:
+        drawSquare(board, square)
+    
+def getPromotedSquare(board, squares, mouseX, mouseY):
+    return getSquare(squares, board, mouseX, mouseY)
 

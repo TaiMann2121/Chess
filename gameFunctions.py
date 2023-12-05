@@ -2,7 +2,7 @@ from piece import *
 import copy
 from square import *
 from functools import cache
-@cache
+# @cache
 # checks if a sqaure is a legal selection
 def isLegalSelection(player, square):
     # a selection is legal as long as the player selects a square with the same color as their color
@@ -11,7 +11,7 @@ def isLegalSelection(player, square):
 def makeMove(selectedSquare, moveSquare, squares, player, previousMove):
     # en passent
     initialSquareDrow = 1 if (player.name == 'player 2' or player.name == 'AI') else -1
-    if isinstance(selectedSquare.piece, Pawn) and previousMove[0] == squares[selectedSquare.row+(2*initialSquareDrow)][moveSquare.col] and previousMove[1] == squares[selectedSquare.row][moveSquare.col] and isinstance(previousMove[1].piece, Pawn):
+    if isinstance(selectedSquare.piece, Pawn) and previousMove[1] == squares[selectedSquare.row][moveSquare.col] and previousMove[0] == squares[selectedSquare.row+(2*initialSquareDrow)][moveSquare.col] and isinstance(previousMove[1].piece, Pawn):
         moveSquare.piece, selectedSquare.piece = selectedSquare.piece, None
         moveSquare.color, selectedSquare.color = selectedSquare.color, None
         squares[selectedSquare.row][moveSquare.col].piece = None
@@ -31,8 +31,6 @@ def makeMove(selectedSquare, moveSquare, squares, player, previousMove):
         squares[row][col+1].color = squares[row][col+3].color
         squares[row][col+3].piece = None
         squares[row][col+3].color = None
-        # player already castled so player.canCastle is now None
-        player.canCastle = None
     # normal move
     else:
         # we want the square we are moving the piece to to have the piece that 
@@ -105,14 +103,14 @@ def semiLegalPawnMoves(selectedSquare, squares, player, previousMove):
                 legalSquares.append(squares[rowCheck][col])
         # check if it can move up 1 row
         rowCheck = row + 1
-        if squares[rowCheck][col].piece == None:
+        if rowCheck < len(squares) and squares[rowCheck][col].piece == None:
             legalSquares.append(squares[rowCheck][col])
         # check if it can attack, rowCheck stays row + 1  and colCheck will either
         # be col + 1 or col - 1 
         directions = [-1, 1]
         for dcol in directions:
             colCheck = col + dcol
-            if colCheck >= 0 and colCheck < len(squares[0]):
+            if rowCheck < len(squares) and colCheck >= 0 and colCheck < len(squares[0]):
                 if squares[rowCheck][colCheck].piece != None and squares[rowCheck][colCheck].color != selectedSquare.color:
                     legalSquares.append(squares[rowCheck][colCheck])
                 # en passent
@@ -128,14 +126,14 @@ def semiLegalPawnMoves(selectedSquare, squares, player, previousMove):
                 legalSquares.append(squares[rowCheck][col])
         # check if it can move up 1 row
         rowCheck = row - 1
-        if squares[rowCheck][col].piece == None:
+        if rowCheck >= 0 and squares[rowCheck][col].piece == None:
             legalSquares.append(squares[rowCheck][col])
         # check if it can attack, rowCheck stays row - 1  and colCheck will either
         # be col + 1 or col - 1 
         directions = [-1, 1]
         for dcol in directions:
             colCheck = col + dcol
-            if colCheck >= 0 and colCheck < len(squares[0]):
+            if rowCheck >= 0 and colCheck >= 0 and colCheck < len(squares[0]):
                 if squares[rowCheck][colCheck].piece != None and squares[rowCheck][colCheck].color != selectedSquare.color:
                     legalSquares.append(squares[rowCheck][colCheck])
                 # en passent
@@ -336,9 +334,9 @@ def inCheckmate(playerInQuestion, squares, playerAttacking, previousMove):
                 semiLegalSquares = semiLegalMoves(squares[row][col], squares, playerInQuestion, previousMove)
                 fullyLegalSquares = fullyLegalMoves(squares[row][col], squares, playerInQuestion, previousMove, playerAttacking, semiLegalSquares)
                 allFullyLegalSquares.extend(fullyLegalSquares)
-    if playerInQuestion.color == 'white':
-        print(f'allFullyLegalSquares: {allFullyLegalSquares}')
-        print(f'Is in check: {inCheck(playerInQuestion, squares, playerAttacking, previousMove)}')
+    #if playerInQuestion.color == 'white':
+        #print(f'allFullyLegalSquares: {allFullyLegalSquares}')
+        #print(f'Is in check: {inCheck(playerInQuestion, squares, playerAttacking, previousMove)}')
     if len(allFullyLegalSquares) == 0 and inCheck(playerInQuestion, squares, playerAttacking, previousMove):
         return True 
     else:

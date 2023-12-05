@@ -50,6 +50,8 @@ def reset(app):
     app.previousMove = (app.initialSquare, app.finalSquare)
     # show pawn promotion screen
     app.showPawnPromotion = False
+    app.pawnPromotionBoard = None
+    app.pawnPromotionSquares = []
     # gameOver starts as False
     app.gameOver = False
 # redrawAll function
@@ -70,6 +72,8 @@ def redrawAll(app):
         for row in range(len(app.squares)):
             for col in range(len(app.squares[0])):
                 drawSquare(app.board, app.squares[row][col])
+        if app.showPawnPromotion:
+            drawPawnPromotion(app.pawnPromotionBoard, app.pawnPromotionSquares)
         ###### test code ######
         if app.player1.isTurn == True:
             drawLabel('Player 1 turn: True', 330, 270)
@@ -367,6 +371,24 @@ def onMousePress(app, mouseX, mouseY):
                                [squareH6, squareG6, squareF6, squareE6, squareD6, squareC6, squareB6, squareA6],
                                [squareH7, squareG7, squareF7, squareE7, squareD7, squareC7, squareB7, squareA7],
                                [squareH8, squareG8, squareF8, squareE8, squareD8, squareC8, squareB8, squareA8]]
+    # we are promoting a pawn
+    elif app.showPawnPromotion:
+        promotedSquare = getPromotedSquare(app.pawnPromotionBoard, app.pawnPromotionSquares, mouseX, mouseY)
+        if promotedSquare != None:
+            app.currentSquare.piece = promotedSquare.piece
+            app.showPawnPromotion = False
+            if app.player1.isTurn == True:
+                if inCheck(app.player1, app.squares, app.player2, app.previousMove):
+                            app.message = 'Check'
+                if inCheckmate(app.player1, app.squares, app.player2, app.previousMove):
+                    app.message = f'Checkmate: {app.player2.name} wins'
+                    app.gameOver = True
+            else:
+                if inCheck(app.player2, app.squares, app.player1, app.previousMove):
+                            app.message = 'Check'
+                if inCheckmate(app.player2, app.squares, app.player1, app.previousMove):
+                    app.message = f'Checkmate: {app.player1.name} wins'
+                    app.gameOver = True
     else: # we are in game
         app.currentSquare = getSquare(app.squares, app.board, mouseX, mouseY)
         # if user clicks on a square or the game isn't over
@@ -384,14 +406,32 @@ def onMousePress(app, mouseX, mouseY):
                     # find the semi legal and fully legal squares of the piece on the selected square 
                     semiLegalSquares = semiLegalMoves(app.selectedSquare, app.squares, app.player1, app.previousMove)
                     fullyLegalSquares = fullyLegalMoves(app.selectedSquare, app.squares, app.player1, app.previousMove, app.player2, semiLegalSquares)
-                    print(f'semi legal Squares: {semiLegalSquares}')
-                    print(f'fully legal Squares: {fullyLegalSquares}')
+                    #print(f'semi legal Squares: {semiLegalSquares}')
+                    #print(f'fully legal Squares: {fullyLegalSquares}')
                     if app.currentSquare in fullyLegalSquares:
                         # make the move
                         makeMove(app.selectedSquare, app.currentSquare, app.squares, app.player1, app.previousMove)
                         # say player 1 was in check but made a move to get it out of check
                         # want to reset message
-                        app.message = "player 2's turn"
+                        app.message = f"{app.player2.name}'s turn"
+                        # checks for pawn promotion
+                        if isinstance(app.currentSquare.piece, Pawn) and app.currentSquare.row == 0:
+                            left, top = getSquareLeftTop(app.board, app.currentSquare.row, app.currentSquare.col)
+                            width, height = getSquareSize(app.board)
+                            app.pawnPromotionBoard = PromotionBoard(1, 4, left, top-height, width*4, height)
+                            if app.player1.color == 'black':
+                                blackQueen = Square(Queen(app.blackQueenImg), 0, 0, 'black')
+                                blackRook = Square(Rook(app.blackRookImg), 0, 1, 'black')
+                                blackBishop = Square(Bishop(app.blackBishopImg), 0, 2, 'black')
+                                blackKnight = Square(Knight(app.blackKnightImg), 0, 3, 'black')
+                                app.pawnPromotionSquares = [blackQueen, blackRook, blackBishop, blackKnight]
+                            else:
+                                whiteQueen = Square(Queen(app.whiteQueenImg), 0, 0, 'white')
+                                whiteRook = Square(Rook(app.whiteRookImg), 0, 1, 'white')
+                                whiteBishop = Square(Bishop(app.whiteBishopImg), 0, 2, 'white')
+                                whiteKnight = Square(Knight(app.whiteKnightImg), 0, 3, 'white')
+                                app.pawnPromotionSquares = [whiteQueen, whiteRook, whiteBishop, whiteKnight]
+                            app.showPawnPromotion = True
                         # keep track of Previous move
                         app.initialSquare = app.selectedSquare
                         app.finalSquare = app.currentSquare
@@ -438,7 +478,25 @@ def onMousePress(app, mouseX, mouseY):
                         makeMove(app.selectedSquare, app.currentSquare, app.squares, app.player2, app.previousMove)
                         # say player 2 was in check but made a move to get it out of check
                         # want to reset the message
-                        app.message = "player 1's turn"
+                        app.message = f"{app.player1.name}'s turn"
+                        # checks for pawn promotion
+                        if isinstance(app.currentSquare.piece, Pawn) and app.currentSquare.row == 7:
+                            left, top = getSquareLeftTop(app.board, app.currentSquare.row, app.currentSquare.col)
+                            width, height = getSquareSize(app.board)
+                            app.pawnPromotionBoard = PromotionBoard(1, 4, left, top+height, width*4, height)
+                            if app.player2.color == 'white':
+                                whiteQueen = Square(Queen(app.whiteQueenImg), 0, 0, 'white')
+                                whiteRook = Square(Rook(app.whiteRookImg), 0, 1, 'white')
+                                whiteBishop = Square(Bishop(app.whiteBishopImg), 0, 2, 'white')
+                                whiteKnight = Square(Knight(app.whiteKnightImg), 0, 3, 'white')
+                                app.pawnPromotionSquares = [whiteQueen, whiteRook, whiteBishop, whiteKnight]
+                            else:
+                                blackQueen = Square(Queen(app.blackQueenImg), 0, 0, 'black')
+                                blackRook = Square(Rook(app.blackRookImg), 0, 1, 'black')
+                                blackBishop = Square(Bishop(app.blackBishopImg), 0, 2, 'black')
+                                blackKnight = Square(Knight(app.blackKnightImg), 0, 3, 'black')
+                                app.pawnPromotionSquares = [blackQueen, blackRook, blackBishop, blackKnight]
+                            app.showPawnPromotion = True
                         # keep track of Previous move
                         app.initialSquare = app.selectedSquare
                         app.finalSquare = app.currentSquare
