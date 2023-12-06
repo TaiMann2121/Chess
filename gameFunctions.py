@@ -341,6 +341,21 @@ def inCheckmate(playerInQuestion, squares, playerAttacking, previousMove):
         return True 
     else:
         return False
+def staleMate(playerInQuestion, squares, playerAttacking, previousMove):
+    allFullyLegalSquares = []
+    for row in range(len(squares)):
+        for col in range(len(squares[0])):
+            if squares[row][col].color == playerInQuestion.color:
+                semiLegalSquares = semiLegalMoves(squares[row][col], squares, playerInQuestion, previousMove)
+                fullyLegalSquares = fullyLegalMoves(squares[row][col], squares, playerInQuestion, previousMove, playerAttacking, semiLegalSquares)
+                allFullyLegalSquares.extend(fullyLegalSquares)
+    #if playerInQuestion.color == 'white':
+        #print(f'allFullyLegalSquares: {allFullyLegalSquares}')
+        #print(f'Is in check: {inCheck(playerInQuestion, squares, playerAttacking, previousMove)}')
+    if len(allFullyLegalSquares) == 0 and not inCheck(playerInQuestion, squares, playerAttacking, previousMove):
+        return True 
+    else:
+        return False
 
 def findKing(player, squares):
     for row in range(len(squares)):

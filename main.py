@@ -385,12 +385,18 @@ def onMousePress(app, mouseX, mouseY):
                 if inCheckmate(app.player1, app.squares, app.player2, app.previousMove):
                     app.message = f'Checkmate: {app.player2.name} wins'
                     app.gameOver = True
+                elif staleMate(app.player1, app.squares, app.player2, app.previousMove):
+                            app.message = f'Stalemate: {app.player1.name} wins'
+                            app.gameOver = True
             else:
                 if inCheck(app.player2, app.squares, app.player1, app.previousMove):
                             app.message = 'Check'
                 if inCheckmate(app.player2, app.squares, app.player1, app.previousMove):
                     app.message = f'Checkmate: {app.player1.name} wins'
                     app.gameOver = True
+                elif staleMate(app.player2, app.squares, app.player1, app.previousMove):
+                            app.message = f'Stalemate: {app.player2.name} wins'
+                            app.gameOver = True
     else: # we are in game
         app.currentSquare = getSquare(app.squares, app.board, mouseX, mouseY)
         # if user clicks on a square or the game isn't over
@@ -419,7 +425,7 @@ def onMousePress(app, mouseX, mouseY):
                         if isinstance(app.currentSquare.piece, Pawn) and app.currentSquare.row == 0:
                             left, top = getSquareLeftTop(app.board, app.currentSquare.row, app.currentSquare.col)
                             width, height = getSquareSize(app.board)
-                            app.pawnPromotionBoard = PromotionBoard(1, 4, left, top-height, width*4, height)
+                            app.pawnPromotionBoard = PromotionBoard(1, 4, app.width/2 - (2*width), top-height, width*4, height)
                             if app.player1.color == 'black':
                                 blackQueen = Square(Queen(app.blackQueenImg), 0, 0, 'black')
                                 blackRook = Square(Rook(app.blackRookImg), 0, 1, 'black')
@@ -446,6 +452,9 @@ def onMousePress(app, mouseX, mouseY):
                             app.message = 'Check'
                         if inCheckmate(app.player2, app.squares, app.player1, app.previousMove):
                             app.message = f'Checkmate: {app.player1.name} wins'
+                            app.gameOver = True
+                        elif staleMate(app.player2, app.squares, app.player1, app.previousMove):
+                            app.message = f'Stalemate: {app.player2.name} wins'
                             app.gameOver = True
                         # it now becomes player 2's turn
                         app.player1.isTurn = False
@@ -487,7 +496,7 @@ def onMousePress(app, mouseX, mouseY):
                         if isinstance(app.currentSquare.piece, Pawn) and app.currentSquare.row == 7:
                             left, top = getSquareLeftTop(app.board, app.currentSquare.row, app.currentSquare.col)
                             width, height = getSquareSize(app.board)
-                            app.pawnPromotionBoard = PromotionBoard(1, 4, left, top+height, width*4, height)
+                            app.pawnPromotionBoard = PromotionBoard(1, 4, app.width/2 - (2*width), top+height, width*4, height)
                             if app.player2.color == 'white':
                                 whiteQueen = Square(Queen(app.whiteQueenImg), 0, 0, 'white')
                                 whiteRook = Square(Rook(app.whiteRookImg), 0, 1, 'white')
@@ -514,6 +523,9 @@ def onMousePress(app, mouseX, mouseY):
                             app.message = 'Check'
                         if inCheckmate(app.player1, app.squares, app.player2, app.previousMove):
                             app.message = f'Checkmate: {app.player2.name} wins'
+                            app.gameOver = True
+                        elif staleMate(app.player1, app.squares, app.player2, app.previousMove):
+                            app.message = f'Stalemate: {app.player1.name} wins'
                             app.gameOver = True
                         # it now becomes player 1's turn
                         app.player1.isTurn = True

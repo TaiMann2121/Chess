@@ -2,7 +2,7 @@ from cmu_graphics import *
 
 # function that draws the menu
 def drawMenu():
-    drawLabel('112 Chess!', app.width/2 , 40, size = 50, font = 'ariel', fill = 'black')
+    drawLabel('112 Chess!', app.width/2 , 60, size = 50, font = 'ariel', fill = 'black')
     # draws the two player button
     drawRect(100, 125, 200, 100, fill = 'saddleBrown')
     drawLabel('Two Player', 200, 175, size = 30, fill = 'black')
